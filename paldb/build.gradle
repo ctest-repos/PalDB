@@ -73,4 +73,7 @@ tasks.withType(Test) {
     if (project.hasProperty("config.inject.cli")) {
         systemProperty 'config.inject.cli', project.property('config.inject.cli')
     }
+    if (project.hasProperty("ctest.mapping.dir")) {
+	systemProperty 'ctest.mapping.dir', project.property('ctest.mapping.dir')
+    }
 }
