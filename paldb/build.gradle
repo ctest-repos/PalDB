@@ -64,3 +64,13 @@ jacocoTestReport {
     }
 }
 
+test {
+    testLogging {
+        events "started", "skipped", "passed", "failed"
+        afterSuite { desc, result ->
+            if (!desc.parent) {
+                println "\nTest suite '${desc.name}' completed, Duration: ${result.endTime - result.startTime} ms"
+            }
+        }
+    }
+}
