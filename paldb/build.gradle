@@ -1,10 +1,12 @@
-apply plugin: 'java'
-apply plugin: 'jacoco'
-apply plugin: 'com.github.kt3k.coveralls'
-apply plugin: 'signing'
-apply plugin: 'maven'
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls'
+    id 'maven-publish'
+    id 'signing'
+}
 
-sourceCompatibility = 1.6
+sourceCompatibility = 1.8
 group = GROUP
 version = VERSION_NAME
 
@@ -24,11 +26,11 @@ sourceSets {
 }
 
 jar {
-  from sourceSets.main.allSource
+  from sourceSets.main.allJava
 }
 
 task perfTest(type: Test) {
-  testClassesDir = sourceSets.perfTest.output.classesDir
+  testClassesDirs = sourceSets.perfTest.output.classesDirs
   classpath = sourceSets.perfTest.runtimeClasspath
 }
 
@@ -39,16 +41,18 @@ perfTest {
 }
 
 dependencies {
-  compile 'org.xerial.snappy:snappy-java:1.0.5'
+  implementation "edu.illinois:ctest-runner-junit4:1.0-SNAPSHOT"
+  implementation "edu.illinois:ctest-runner-testng:1.0-SNAPSHOT"
+  implementation 'org.xerial.snappy:snappy-java:1.0.5'
 
-  testCompile 'org.testng:testng:6.8.8'
-  testCompile 'commons-lang:commons-lang:2.6'
+  testImplementation 'org.testng:testng:6.8.8'
+  testImplementation 'commons-lang:commons-lang:2.6'
 
-  perfTestCompile configurations.testCompile
+//   perfTestCompile configurations.testCompile
 
   // Only used for benchmark
-  perfTestCompile 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
-  perfTestCompile 'org.rocksdb:rocksdbjni:4.0'
+  testImplementation 'org.fusesource.leveldbjni:leveldbjni-all:1.8'
+  testImplementation 'org.rocksdb:rocksdbjni:4.0'
 }
 
 javadoc {
@@ -56,71 +60,14 @@ javadoc {
 }
 
 jacocoTestReport {
-  reports {
-    html.enabled = true
-    xml.enabled = true
-  }
+    reports {
+        html.required = true
+        xml.required = true
+    }
 }
 
-if (project.hasProperty('release')) {
-
-  signing {
-    sign configurations.archives
-  }
-
-  task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
-  }
-
-  task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-  }
-
-  artifacts {
-    archives javadocJar, sourcesJar
-  }
-
-  uploadArchives {
-    repositories {
-      mavenDeployer {
-        // POM signature
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-        // Target repository
-        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-          authentication(userName: ossrhUser, password: ossrhPassword)
-        }
-        pom.project {
-          group 'com.linkedin.paldb'
-          name 'paldb'
-          description 'Embeddable persistent write-once key-value store'
-          packaging 'jar'
-          url 'https://github.com/linkedin/PalDB'
-
-          scm {
-            connection 'scm:git:https://github.com/linkedin/PalDB.git'
-            developerConnection 'scm:git@github.com:linkedin/PalDB.git'
-            url 'https://github.com/linkedin/PalDB'
-          }
-
-          licenses {
-            license {
-              name 'The Apache Software License, Version 2.0'
-              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-              distribution 'repo'
-            }
-          }
-
-          developers {
-            developer {
-              id 'mbastian'
-              name 'Mathieu Bastian'
-              email 'mbastian@apache.org'
-            }
-          }
-        }
-      }
+tasks.withType(Test) {
+    if (project.hasProperty('ctest.config.save')) {
+        systemProperty 'ctest.config.save', project.property('ctest.config.save')
     }
-  }
 }

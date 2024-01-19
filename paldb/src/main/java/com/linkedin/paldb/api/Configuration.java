@@ -14,6 +14,7 @@
 
 package com.linkedin.paldb.api;
 
+import edu.illinois.ConfigTracker;
 import com.linkedin.paldb.impl.Serializers;
 import java.io.Serializable;
 import java.util.Arrays;
@@ -87,6 +88,8 @@ public class Configuration implements Serializable {
 
     //Serializers
     serializers = new Serializers();
+
+    ConfigTracker.injectConfig((arg1, arg2) -> set(arg1, (String) arg2));
   }
 
   /**
@@ -117,6 +120,7 @@ public class Configuration implements Serializable {
    * @return value of null if not found
    */
   private String get(String key) {
+    ConfigTracker.markParamAsUsed(key);
     return properties.get(key);
   }
 
@@ -152,6 +156,7 @@ public class Configuration implements Serializable {
    * @return this configuration
    */
   public Configuration set(String key, String value) {
+    ConfigTracker.markParamAsSet(key);
     checkReadOnly();
 
     properties.put(key, value);
